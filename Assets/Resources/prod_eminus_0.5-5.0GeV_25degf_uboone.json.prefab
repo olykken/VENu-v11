@@ -8078,7 +8078,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 415266}
   m_Layer: 0
-  m_Name: prod_eminus_0.5-5.0GeV_25degf_uboone.json
+  m_Name: 3
   m_TagString: event
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

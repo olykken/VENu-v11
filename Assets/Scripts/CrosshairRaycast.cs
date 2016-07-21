@@ -23,6 +23,10 @@ public class CrosshairRaycast : MonoBehaviour
     public float flipTime = 2.0f;
     private float countDown;
 
+    public Material highlight;
+    private Material mat;
+    private Renderer rend;
+
     // Use this for initialization
     void Start()
     {
@@ -41,6 +45,7 @@ public class CrosshairRaycast : MonoBehaviour
         if (Physics.Raycast(cameraPosition, cameraForward, out hit, 15.0f))
         {
             target = hit.collider.gameObject;
+            rend = target.GetComponent<Renderer>();
             info = target.transform.Find("InfoCanvas").gameObject;
             if (info != null)
             {
@@ -55,6 +60,7 @@ public class CrosshairRaycast : MonoBehaviour
             Debug.Log("Found new target tag " + target.tag + " replacing current tag " + currentTag);
             HideInfo();
         }
+
     }
 
     private void HideInfo()
@@ -70,6 +76,20 @@ public class CrosshairRaycast : MonoBehaviour
         info.GetComponent<Canvas>().enabled = true;
         info.SetActive(true);
         currentTag = target.tag;
+    }
+
+    private void Glow()
+    {
+        mat = rend.material;
+        while (info.GetComponent<Canvas>().enabled == true) {
+            rend.material = highlight;
+        }
+        Debug.Log("the current mat is" + mat);
+    }
+
+    private void NoGlow()
+    {
+        rend.material = mat;
     }
 }
 

@@ -9008,7 +9008,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 405802}
   m_Layer: 0
-  m_Name: prod_bnblike_proton_uboone.json
+  m_Name: 1
   m_TagString: event
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -8633,7 +8633,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 493738}
   m_Layer: 0
-  m_Name: prod_eminus_0.1-2.0GeV_isotropic.json
+  m_Name: 2
   m_TagString: event
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

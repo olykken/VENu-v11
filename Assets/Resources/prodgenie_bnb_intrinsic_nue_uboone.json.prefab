@@ -688,7 +688,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 448614}
   m_Layer: 0
-  m_Name: prodgenie_bnb_intrinsic_nue_uboone.json
+  m_Name: 4
   m_TagString: event
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

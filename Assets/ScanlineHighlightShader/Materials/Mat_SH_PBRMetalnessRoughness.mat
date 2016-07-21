@@ -1,0 +1,105 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_Name: Mat_SH_PBRMetalnessRoughness
+  m_Shader: {fileID: 4800000, guid: e2456bef0cb2d2a479a88bfbb6167110, type: 3}
+  m_ShaderKeywords: _SMOOTHNESSTEXTYPE_ROUGHNESS _TYPE_SMOOTHNESS
+  m_LightmapFlags: 5
+  m_CustomRenderQueue: 2000
+  stringTagMap: {}
+  m_SavedProperties:
+    serializedVersion: 2
+    m_TexEnvs:
+      data:
+        first:
+          name: _MainTex
+        second:
+          m_Texture: {fileID: 2800000, guid: 608192765b89fca43b24eb118dd224e5, type: 3}
+          m_Scale: {x: 0.3, y: 0.3}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _LineTex
+        second:
+          m_Texture: {fileID: 2800000, guid: 09e2a0ec5d4932844b65509283c99930, type: 3}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _BumpTex
+        second:
+          m_Texture: {fileID: 2800000, guid: 0bb7d92c67c23104c8f92df0e0e169c3, type: 3}
+          m_Scale: {x: 0.3, y: 0.3}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _MetalSmoothTex
+        second:
+          m_Texture: {fileID: 0}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _AOTex
+        second:
+          m_Texture: {fileID: 0}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+      data:
+        first:
+          name: _MetalRoughTex
+        second:
+          m_Texture: {fileID: 0}
+          m_Scale: {x: 1, y: 1}
+          m_Offset: {x: 0, y: 0}
+    m_Floats:
+      data:
+        first:
+          name: _RimPower
+        second: 2
+      data:
+        first:
+          name: _LinesX
+        second: 64
+      data:
+        first:
+          name: _LinesY
+        second: 128
+      data:
+        first:
+          name: _LineSpeedX
+        second: 0
+      data:
+        first:
+          name: _LineSpeedY
+        second: 0
+      data:
+        first:
+          name: _RimVis
+        second: 1
+      data:
+        first:
+          name: _LineVis
+        second: 1
+      data:
+        first:
+          name: _BaseVis
+        second: 0.2
+      data:
+        first:
+          name: _Type
+        second: 0
+    m_Colors:
+      data:
+        first:
+          name: _Color
+        second: {r: 1, g: 1, b: 1, a: 1}
+      data:
+        first:
+          name: _HighlightColor
+        second: {r: 0.4, g: 1, b: 0.2, a: 1}
