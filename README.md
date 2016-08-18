@@ -7,11 +7,11 @@ Some of the instructions may not quite work. Please let olykken know if somethin
 
 ## Requirements
 
-You'll need to install usually the latest version of Unity (see below). You'll also need the computer graphics program Blender. 
+You'll need to install usually the latest version of Unity (see below). 
 
 ## A word about Unity versions
 
-Git and Unity don't really get along all that well. In order to make them better bedfellows, it's recommended that everyone working uses the same version of Unity. The repository currently uses version 5.3.5.
+Git and Unity don't really get along all that well. In order to make them more compatable, it is recommended that everyone working uses the same version of Unity. The repository currently uses version 5.3.5.
 
 Unity 5.3.5 can be downloaded here: http://unity3d.com/get-unity/download
 
@@ -47,9 +47,11 @@ If you happen to delete files and would like to commit the change, do this inste
     git add --all
     git commit -m "This is a test commit"
 
-Remember that git creates a local repository in you local directory. The add and commit commands above only send changes to that local repository. If you want the changes moved to the master branch at the origin repository (what's at https://github.com/olykken/VENu-v11), you need to perform the following:
+Remember that git creates a local repository in your local directory. The add and commit commands above only send changes to that local repository. If you want the changes moved to the master branch at the origin repository (what's at https://github.com/olykken/VENu-v11), you need to perform the following:
 
     git push origin master
     
 When people run the pull command above to update their version, they will see your changes and be able to use them. 
+
+If you forked the project and made changes to the program or the files in your local repository you can also open the project in GitHub desktop and sync your chances from there.
 
