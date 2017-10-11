@@ -35,12 +35,26 @@ public class eventScroller : MonoBehaviour {
 	}
 	
 	public bool clicked() {
-            return Input.GetButton("Forward");
+        if (OVRInput.GetUp(OVRInput.Button.One) || Input.GetButton("Forward"))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
 	}
 
     public bool backClick()
     {
-        return Input.GetButton("Back");
+        if (OVRInput.GetUp(OVRInput.Button.Two) || Input.GetButton("Back"))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
 	// Update is called once per frame

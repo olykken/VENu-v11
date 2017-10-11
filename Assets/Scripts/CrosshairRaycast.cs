@@ -23,10 +23,6 @@ public class CrosshairRaycast : MonoBehaviour
     public float flipTime = 2.0f;
     private float countDown;
 
-    public Material highlight;
-    private Material mat;
-    private Renderer rend;
-
     // Use this for initialization
     void Start()
     {
@@ -42,25 +38,23 @@ public class CrosshairRaycast : MonoBehaviour
         ray = new Ray(cameraPosition, cameraForward);
         Debug.DrawRay(cameraPosition, cameraForward, Color.blue, 3);
 
-        if (Physics.Raycast(cameraPosition, cameraForward, out hit, 15.0f))
-        {
-            target = hit.collider.gameObject;
-            rend = target.GetComponent<Renderer>();
-            info = target.transform.Find("InfoCanvas").gameObject;
-            if (info != null)
-            {
-                ShowInfo();
-                countDown = flipTime;
-                Debug.Log("Found an object with tag " + target.tag + " at distance: " + hit.distance);
-            }
-        }
+		if (Physics.Raycast(cameraPosition, cameraForward, out hit, 15.0f))
+		{
+			target = hit.collider.gameObject;
+			info = target.transform.Find("InfoCanvas").gameObject;
+			if (info != null)
+			{
+				ShowInfo();
+				countDown = flipTime;
+				Debug.Log("Found an object with tag " + target.tag + " at distance: " + hit.distance);
+			}
+		}
 
         if ((hit.collider == null || target.tag != currentTag) && isInfo)
         {
             Debug.Log("Found new target tag " + target.tag + " replacing current tag " + currentTag);
             HideInfo();
         }
-
     }
 
     private void HideInfo()
@@ -76,20 +70,6 @@ public class CrosshairRaycast : MonoBehaviour
         info.GetComponent<Canvas>().enabled = true;
         info.SetActive(true);
         currentTag = target.tag;
-    }
-
-    private void Glow()
-    {
-        mat = rend.material;
-        while (info.GetComponent<Canvas>().enabled == true) {
-            rend.material = highlight;
-        }
-        Debug.Log("the current mat is" + mat);
-    }
-
-    private void NoGlow()
-    {
-        rend.material = mat;
     }
 }
 
