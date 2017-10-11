@@ -22,7 +22,6 @@ limitations under the License.
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using VR = UnityEngine.VR;
 
@@ -35,11 +34,11 @@ public class OVRCameraRig : MonoBehaviour
 	/// <summary>
 	/// The left eye camera.
 	/// </summary>
-	public Camera leftEyeCamera { get; private set; }
+	public Camera leftEyeCamera { get { return (usePerEyeCameras) ? _leftEyeCamera : _centerEyeCamera; } }
 	/// <summary>
 	/// The right eye camera.
 	/// </summary>
-	public Camera rightEyeCamera { get; private set; }
+	public Camera rightEyeCamera { get { return (usePerEyeCameras) ? _rightEyeCamera : _centerEyeCamera; } }
 	/// <summary>
 	/// Provides a root transform for all anchors in tracking space.
 	/// </summary>
@@ -73,63 +72,72 @@ public class OVRCameraRig : MonoBehaviour
 	/// </summary>
 	public event System.Action<OVRCameraRig> UpdatedAnchors;
 
+	/// <summary>
+	/// If true, separate cameras will be used for the left and right eyes.
+	/// </summary>
+	public bool usePerEyeCameras = false;
+
+	/// <summary>
+	/// If true, all tracked anchors are updated in FixedUpdate instead of Update to favor physics fidelity.
+	/// \note: If the fixed update rate doesn't match the rendering framerate (OVRManager.display.appFramerate), the anchors will visibly judder.
+	/// </summary>
+	public bool useFixedUpdateForTracking = false;
+
+	private bool _skipUpdate = false;
+
 	private readonly string trackingSpaceName = "TrackingSpace";
 	private readonly string trackerAnchorName = "TrackerAnchor";
 	private readonly string eyeAnchorName = "EyeAnchor";
 	private readonly string handAnchorName = "HandAnchor";
 	private readonly string legacyEyeAnchorName = "Camera";
-
-#if UNITY_ANDROID && !UNITY_EDITOR
-    bool correctedTrackingSpace = false;
-#endif
+	private Camera _centerEyeCamera;
+	private Camera _leftEyeCamera;
+	private Camera _rightEyeCamera;
 
 #region Unity Messages
 	private void Awake()
 	{
+		_skipUpdate = true;
 		EnsureGameObjectIntegrity();
 	}
 
 	private void Start()
 	{
-		EnsureGameObjectIntegrity();
-
-		if (!Application.isPlaying)
-			return;
-
 		UpdateAnchors();
+	}
+
+	private void FixedUpdate()
+	{
+		if (useFixedUpdateForTracking)
+			UpdateAnchors();
 	}
 
 	private void Update()
 	{
-		EnsureGameObjectIntegrity();
-		
-		if (!Application.isPlaying)
-			return;
+		_skipUpdate = false;
 
-		UpdateAnchors();
-
-#if UNITY_ANDROID && !UNITY_EDITOR
-
-        if (!correctedTrackingSpace)
-        {
-            //HACK: Unity 5.1.1p3 double-counts the head model on Android. Subtract it off in the reference frame.
-
-            var headModel = new Vector3(0f, OVRManager.profile.eyeHeight - OVRManager.profile.neckHeight, OVRManager.profile.eyeDepth);
-            var eyePos = -headModel + centerEyeAnchor.localRotation * headModel;
-
-            if ((eyePos - centerEyeAnchor.localPosition).magnitude > 0.01f)
-            {
-                trackingSpace.localPosition = trackingSpace.localPosition - 2f * (trackingSpace.localRotation * headModel);
-                correctedTrackingSpace = true;
-            }
-        }
-#endif
+		if (!useFixedUpdateForTracking)
+			UpdateAnchors();
 	}
 
 #endregion
 
 	private void UpdateAnchors()
 	{
+		EnsureGameObjectIntegrity();
+
+		if (!Application.isPlaying)
+			return;
+		
+		if (_skipUpdate)
+		{
+			centerEyeAnchor.FromOVRPose(OVRPose.identity, true);
+			leftEyeAnchor.FromOVRPose(OVRPose.identity, true);
+			rightEyeAnchor.FromOVRPose(OVRPose.identity, true);
+
+			return;
+		}
+
 		bool monoscopic = OVRManager.instance.monoscopic;
 
 		OVRPose tracker = OVRManager.tracker.GetPose();
@@ -177,38 +185,57 @@ public class OVRCameraRig : MonoBehaviour
 		if (trackerAnchor == null)
 			trackerAnchor = ConfigureTrackerAnchor(trackingSpace);
 
-        if (leftEyeCamera == null || rightEyeCamera == null)
+		if (_centerEyeCamera == null || _leftEyeCamera == null || _rightEyeCamera == null)
 		{
-			Camera centerEyeCamera = centerEyeAnchor.GetComponent<Camera>();
+			_centerEyeCamera = centerEyeAnchor.GetComponent<Camera>();
+			_leftEyeCamera = leftEyeAnchor.GetComponent<Camera>();
+			_rightEyeCamera = rightEyeAnchor.GetComponent<Camera>();
 
-			if (centerEyeCamera == null)
+			if (_centerEyeCamera == null)
 			{
-				centerEyeCamera = centerEyeAnchor.gameObject.AddComponent<Camera>();
+				_centerEyeCamera = centerEyeAnchor.gameObject.AddComponent<Camera>();
+				_centerEyeCamera.tag = "MainCamera";
 			}
 
-			// Only the center eye camera should now render.
-			var cameras = gameObject.GetComponentsInChildren<Camera>();
-			for (int i = 0; i < cameras.Length; i++)
+			if (_leftEyeCamera == null)
 			{
-				Camera cam = cameras[i];
+				_leftEyeCamera = leftEyeAnchor.gameObject.AddComponent<Camera>();
+				_leftEyeCamera.tag = "MainCamera";
 
-				if (cam == centerEyeCamera)
-					continue;
-
-				if (cam && (cam.transform == leftEyeAnchor || cam.transform == rightEyeAnchor) && cam.enabled)
-				{
-					Debug.LogWarning("Having a Camera on " + cam.name + " is deprecated. Disabling the Camera. Please use the Camera on " + centerEyeCamera.name + " instead.");
-					cam.enabled = false;
-
-					// Use "MainCamera" if the previous cameras used it.
-					if (cam.CompareTag("MainCamera"))
-						centerEyeCamera.tag = "MainCamera";
-				}
+#if !UNITY_5_4_OR_NEWER
+				usePerEyeCameras = false;
+				Debug.Log("Please set left eye Camera's Target Eye to Left before using.");
+#endif
 			}
-			
-			leftEyeCamera = centerEyeCamera;
-			rightEyeCamera = centerEyeCamera;
+
+			if (_rightEyeCamera == null)
+			{
+				_rightEyeCamera = rightEyeAnchor.gameObject.AddComponent<Camera>();
+				_rightEyeCamera.tag = "MainCamera";
+
+#if !UNITY_5_4_OR_NEWER
+				usePerEyeCameras = false;
+				Debug.Log("Please set right eye Camera's Target Eye to Right before using.");
+#endif
+			}
+
+#if UNITY_5_4_OR_NEWER
+			_centerEyeCamera.stereoTargetEye = StereoTargetEyeMask.Both;
+			_leftEyeCamera.stereoTargetEye = StereoTargetEyeMask.Left;
+			_rightEyeCamera.stereoTargetEye = StereoTargetEyeMask.Right;
+#endif
 		}
+
+		if (_centerEyeCamera.enabled == usePerEyeCameras ||
+		    _leftEyeCamera.enabled == !usePerEyeCameras ||
+		    _rightEyeCamera.enabled == !usePerEyeCameras)
+		{
+			_skipUpdate = true;
+		}
+		
+		_centerEyeCamera.enabled = !usePerEyeCameras;
+		_leftEyeCamera.enabled = usePerEyeCameras;
+		_rightEyeCamera.enabled = usePerEyeCameras;
 	}
 
 	private Transform ConfigureRootAnchor(string name)

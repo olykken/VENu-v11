@@ -20,7 +20,9 @@ limitations under the License.
 ************************************************************************************/
 
 using UnityEngine;
+using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 /// <summary>
 /// Miscellaneous extension methods that any script can use.
@@ -95,14 +97,54 @@ public static class OVRExtensions
 		};
 	}
 
+	internal static Color FromColorf(this OVRPlugin.Colorf c)
+	{
+		return new Color() { r = c.r, g = c.g, b = c.b, a = c.a };
+	}
+
+	internal static OVRPlugin.Colorf ToColorf(this Color c)
+	{
+		return new OVRPlugin.Colorf() { r = c.r, g = c.g, b = c.b, a = c.a };
+	}
+
+	internal static Vector3 FromVector3f(this OVRPlugin.Vector3f v)
+	{
+		return new Vector3() { x = v.x, y = v.y, z = v.z };
+	}
+
+	internal static Vector3 FromFlippedZVector3f(this OVRPlugin.Vector3f v)
+	{
+		return new Vector3() { x = v.x, y = v.y, z = -v.z };
+	}
+
 	internal static OVRPlugin.Vector3f ToVector3f(this Vector3 v)
 	{
 		return new OVRPlugin.Vector3f() { x = v.x, y = v.y, z = v.z };
 	}
 
+	internal static OVRPlugin.Vector3f ToFlippedZVector3f(this Vector3 v)
+	{
+		return new OVRPlugin.Vector3f() { x = v.x, y = v.y, z = -v.z };
+	}
+
+	internal static Quaternion FromQuatf(this OVRPlugin.Quatf q)
+	{
+		return new Quaternion() { x = q.x, y = q.y, z = q.z, w = q.w };
+	}
+
+	internal static Quaternion FromFlippedZQuatf(this OVRPlugin.Quatf q)
+	{
+		return new Quaternion() { x = -q.x, y = -q.y, z = q.z, w = q.w };
+	}
+
 	internal static OVRPlugin.Quatf ToQuatf(this Quaternion q)
 	{
 		return new OVRPlugin.Quatf() { x = q.x, y = q.y, z = q.z, w = q.w };
+	}
+
+	internal static OVRPlugin.Quatf ToFlippedZQuatf(this Quaternion q)
+	{
+		return new OVRPlugin.Quatf() { x = -q.x, y = -q.y, z = q.z, w = q.w };
 	}
 }
 
@@ -185,6 +227,8 @@ public struct OVRPose
 	{
 		var ret = this;
 		ret.position.z = -ret.position.z;
+		ret.orientation.z = -ret.orientation.z;
+		ret.orientation.w = -ret.orientation.w;
 		return ret;
 	}
 
@@ -195,5 +239,113 @@ public struct OVRPose
 			Position = position.ToVector3f(),
 			Orientation = orientation.ToQuatf()
 		};
+	}
+}
+
+/// <summary>
+/// Encapsulates an 8-byte-aligned of unmanaged memory.
+/// </summary>
+public class OVRNativeBuffer : IDisposable
+{
+	private bool disposed = false;
+	private int m_numBytes = 0;
+	private IntPtr m_ptr = IntPtr.Zero;
+
+	/// <summary>
+	/// Creates a buffer of the specified size.
+	/// </summary>
+	public OVRNativeBuffer(int numBytes)
+	{
+		Reallocate(numBytes);
+	}
+
+	/// <summary>
+	/// Releases unmanaged resources and performs other cleanup operations before the <see cref="OVRNativeBuffer"/> is
+	/// reclaimed by garbage collection.
+	/// </summary>
+	~OVRNativeBuffer()
+	{
+		Dispose(false);
+	}
+
+	/// <summary>
+	/// Reallocates the buffer with the specified new size.
+	/// </summary>
+	public void Reset(int numBytes)
+	{
+		Reallocate(numBytes);
+	}
+
+	/// <summary>
+	/// The current number of bytes in the buffer.
+	/// </summary>
+	public int GetCapacity()
+	{
+		return m_numBytes;
+	}
+
+	/// <summary>
+	/// A pointer to the unmanaged memory in the buffer, starting at the given offset in bytes.
+	/// </summary>
+	public IntPtr GetPointer(int byteOffset = 0)
+	{
+		if (byteOffset < 0 || byteOffset >= m_numBytes)
+			return IntPtr.Zero;
+		return (byteOffset == 0) ? m_ptr : new IntPtr(m_ptr.ToInt64() + byteOffset);
+	}
+
+	/// <summary>
+	/// Releases all resource used by the <see cref="OVRNativeBuffer"/> object.
+	/// </summary>
+	/// <remarks>Call <see cref="Dispose"/> when you are finished using the <see cref="OVRNativeBuffer"/>. The <see cref="Dispose"/>
+	/// method leaves the <see cref="OVRNativeBuffer"/> in an unusable state. After calling <see cref="Dispose"/>, you must
+	/// release all references to the <see cref="OVRNativeBuffer"/> so the garbage collector can reclaim the memory that
+	/// the <see cref="OVRNativeBuffer"/> was occupying.</remarks>
+	public void Dispose()
+	{
+		Dispose(true);
+		GC.SuppressFinalize(this);
+	}
+
+	private void Dispose(bool disposing)
+	{
+		if (disposed)
+			return;
+
+		if (disposing)
+		{
+			// dispose managed resources
+		}
+
+		// dispose unmanaged resources
+		Release();
+
+		disposed = true;
+	}
+
+	private void Reallocate(int numBytes)
+	{
+		Release();
+
+		if (numBytes > 0)
+		{
+			m_ptr = Marshal.AllocHGlobal(numBytes);
+			m_numBytes = numBytes;
+		}
+		else
+		{
+			m_ptr = IntPtr.Zero;
+			m_numBytes = 0;
+		}
+	}
+
+	private void Release()
+	{
+		if (m_ptr != IntPtr.Zero)
+		{
+			Marshal.FreeHGlobal(m_ptr);
+			m_ptr = IntPtr.Zero;
+			m_numBytes = 0;
+		}
 	}
 }

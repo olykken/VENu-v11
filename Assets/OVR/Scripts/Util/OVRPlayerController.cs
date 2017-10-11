@@ -93,6 +93,7 @@ public class OVRPlayerController : MonoBehaviour
 	private bool prevHatLeft = false;
 	private bool prevHatRight = false;
 	private float SimulationRate = 60f;
+	private float buttonRotation = 0f;
 
 	void Start()
 	{
@@ -143,7 +144,17 @@ public class OVRPlayerController : MonoBehaviour
 		}
 	}
 
-	protected virtual void Update()
+	void Update()
+	{
+		//Use keys to ratchet rotation
+		if (Input.GetKeyDown(KeyCode.Q))
+			buttonRotation -= RotationRatchet;
+
+		if (Input.GetKeyDown(KeyCode.E))
+			buttonRotation += RotationRatchet;
+	}
+
+	protected virtual void UpdateController()
 	{
 		if (useProfileData)
 		{
@@ -189,13 +200,13 @@ public class OVRPlayerController : MonoBehaviour
 
 		moveDirection += MoveThrottle * SimulationRate * Time.deltaTime;
 
-	/*	// Gravity
+		// Gravity
 		if (Controller.isGrounded && FallSpeed <= 0)
 			FallSpeed = ((Physics.gravity.y * (GravityModifier * 0.002f)));
 		else
 			FallSpeed += ((Physics.gravity.y * (GravityModifier * 0.002f)) * SimulationRate * Time.deltaTime);
 
-		moveDirection.y += FallSpeed * SimulationRate * Time.deltaTime; */
+		moveDirection.y += FallSpeed * SimulationRate * Time.deltaTime;
 
 		// Offset correction for uneven ground
 		float bumpUpOffset = 0.0f;
@@ -249,10 +260,10 @@ public class OVRPlayerController : MonoBehaviour
 			MoveScale = 0.70710678f;
 
 		// No positional movement if we are in the air
-		//if (!Controller.isGrounded)
-		//	MoveScale = 0.0f;
+		if (!Controller.isGrounded)
+			MoveScale = 0.0f;
 
-	//	MoveScale *= SimulationRate * Time.deltaTime;
+		MoveScale *= SimulationRate * Time.deltaTime;
 
 		// Compute this for key movement
 		float moveInfluence = Acceleration * 0.1f * MoveScale * MoveScaleMultiplier;
@@ -277,7 +288,7 @@ public class OVRPlayerController : MonoBehaviour
 
 		Vector3 euler = transform.rotation.eulerAngles;
 
-		/*bool curHatLeft = OVRInput.Get(OVRInput.Button.PrimaryShoulder);
+		bool curHatLeft = OVRInput.Get(OVRInput.Button.PrimaryShoulder);
 
 		if (curHatLeft && !prevHatLeft)
 			euler.y -= RotationRatchet;
@@ -289,14 +300,10 @@ public class OVRPlayerController : MonoBehaviour
 		if(curHatRight && !prevHatRight)
 			euler.y += RotationRatchet;
 
-		prevHatRight = curHatRight;*/
+		prevHatRight = curHatRight;
 
-		//Use keys to ratchet rotation
-		if (Input.GetKeyDown(KeyCode.Q))
-			euler.y -= RotationRatchet;
-
-		if (Input.GetKeyDown(KeyCode.E))
-			euler.y += RotationRatchet;
+		euler.y += buttonRotation;
+		buttonRotation = 0f;
 
 		float rotateInfluence = SimulationRate * Time.deltaTime * RotationAmount * RotationScaleMultiplier;
 
@@ -350,6 +357,8 @@ public class OVRPlayerController : MonoBehaviour
 			root.position = prevPos;
 			root.rotation = prevRot;
 		}
+
+		UpdateController();
 	}
 
 	/// <summary>
@@ -452,7 +461,7 @@ public class OVRPlayerController : MonoBehaviour
 	/// </summary>
 	public void ResetOrientation()
 	{
-		if (HmdResetsY)
+		if (HmdResetsY && !HmdRotatesY)
 		{
 			Vector3 euler = transform.rotation.eulerAngles;
 			euler.y = InitialYRotation;

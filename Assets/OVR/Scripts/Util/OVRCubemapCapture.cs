@@ -15,16 +15,6 @@ using System.IO;
 /// 2) If you like to trigger the screen capture in your code logic, just call static function [OVRCubemapCapture.TriggerCubemapCapture] with proper input arguments. 
 /// </description>
 
-public enum CubemapSize
-{
-    Size_2048x2048 = 2048,
-    Size_1024x1024 = 1024,
-    Size_512x512 = 512,
-    Size_256x256 = 256,
-    Size_64x64 = 64,
-    Size_32x32 = 32,
-}
-
 public class OVRCubemapCapture : MonoBehaviour
 {
 	/// <summary>
@@ -48,7 +38,7 @@ public class OVRCubemapCapture : MonoBehaviour
 	/// <summary>
 	/// The cube face resolution
 	/// </summary>
-	public CubemapSize cubemapSize = CubemapSize.Size_2048x2048;
+	public int cubemapSize = 2048;
 
 	// Update is called once per frame
 	void Update()
@@ -81,7 +71,7 @@ public class OVRCubemapCapture : MonoBehaviour
 	/// Note2: if you only want to specify path not filename, please end [pathName] with "/" 
 	/// </description>
 
-	public static void TriggerCubemapCapture(Vector3 capturePos, CubemapSize cubemapSize = CubemapSize.Size_2048x2048, string pathName = null)
+	public static void TriggerCubemapCapture(Vector3 capturePos, int cubemapSize = 2048, string pathName = null)
 	{
 		GameObject ownerObj = new GameObject("CubemapCamera", typeof(Camera));
 		ownerObj.hideFlags = HideFlags.HideAndDontSave;
@@ -91,12 +81,80 @@ public class OVRCubemapCapture : MonoBehaviour
 		camComponent.farClipPlane = 10000.0f;
 		camComponent.enabled = false;
 
-		Cubemap cubemap = new Cubemap((int)cubemapSize, TextureFormat.RGB24, false);
-		camComponent.RenderToCubemap(cubemap, 63);
+		Cubemap cubemap = new Cubemap(cubemapSize, TextureFormat.RGB24, false);
+		RenderIntoCubemap(camComponent, cubemap);
 		SaveCubemapCapture(cubemap, pathName);
 		DestroyImmediate(cubemap);
 		DestroyImmediate(ownerObj);
 	}
+
+
+	public static void RenderIntoCubemap(Camera ownerCamera, Cubemap outCubemap)
+	{
+		int width = (int)outCubemap.width;
+		int height = (int)outCubemap.height;
+
+		CubemapFace[] faces = new CubemapFace[] { CubemapFace.PositiveX, CubemapFace.NegativeX, CubemapFace.PositiveY, CubemapFace.NegativeY, CubemapFace.PositiveZ, CubemapFace.NegativeZ };
+		Vector3[] faceAngles = new Vector3[] { new Vector3(0.0f, 90.0f, 0.0f), new Vector3(0.0f, -90.0f, 0.0f), new Vector3(-90.0f, 0.0f, 0.0f), new Vector3(90.0f, 0.0f, 0.0f), new Vector3(0.0f, 0.0f, 0.0f), new Vector3(0.0f, 180.0f, 0.0f) };
+
+		// Backup states
+		RenderTexture backupRenderTex = RenderTexture.active;
+		float backupFieldOfView = ownerCamera.fieldOfView;
+		float backupAspect = ownerCamera.aspect;
+		Quaternion backupRot = ownerCamera.transform.rotation;
+		//RenderTexture backupRT = ownerCamera.targetTexture;
+
+		// Enable 8X MSAA
+		RenderTexture faceTexture = new RenderTexture(width, height, 24);
+		faceTexture.antiAliasing = 8;
+#if UNITY_5_4_OR_NEWER
+		faceTexture.dimension = UnityEngine.Rendering.TextureDimension.Tex2D;
+#endif
+		faceTexture.hideFlags = HideFlags.HideAndDontSave;
+
+		// For intermediate saving
+		Texture2D swapTex = new Texture2D(width, height, TextureFormat.RGB24, false);
+		swapTex.hideFlags = HideFlags.HideAndDontSave;
+
+		// Capture 6 Directions
+		ownerCamera.targetTexture = faceTexture;
+		ownerCamera.fieldOfView = 90;
+		ownerCamera.aspect = 1.0f;
+
+		Color[] mirroredPixels = new Color[swapTex.height * swapTex.width];
+		for (int i = 0; i < faces.Length; i++)
+		{
+			ownerCamera.transform.eulerAngles = faceAngles[i];
+			ownerCamera.Render();
+			RenderTexture.active = faceTexture;
+			swapTex.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+
+			// Mirror vertically to meet the standard of unity cubemap
+			Color[] OrignalPixels = swapTex.GetPixels();
+			for (int y1 = 0; y1 < height; y1++)
+			{
+				for (int x1 = 0; x1 < width; x1++)
+				{
+					mirroredPixels[y1 * width + x1] = OrignalPixels[((height - 1 - y1) * width) + x1];
+				}
+			};
+			outCubemap.SetPixels(mirroredPixels, faces[i]);
+		}
+
+		outCubemap.SmoothEdges();
+
+		// Restore states
+		RenderTexture.active = backupRenderTex;
+		ownerCamera.fieldOfView = backupFieldOfView;
+		ownerCamera.aspect = backupAspect;
+		ownerCamera.transform.rotation = backupRot;
+		ownerCamera.targetTexture = backupRenderTex;
+
+		DestroyImmediate(swapTex);
+		DestroyImmediate(faceTexture);
+
+		}
+
 
 	/// <summary>
 	/// Save unity cubemap into NPOT 6x1 cubemap/texture atlas in the following format PX NX PY NY PZ NZ
@@ -149,10 +207,9 @@ public class OVRCubemapCapture : MonoBehaviour
 		}
 
 		// Validate path
-		DirectoryInfo dirInfo;
 		try
 		{
-			dirInfo = System.IO.Directory.CreateDirectory(dirName);
+			System.IO.Directory.CreateDirectory(dirName);
 		}
 		catch (System.Exception e)
 		{
