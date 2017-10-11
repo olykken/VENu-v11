@@ -1,4 +1,5 @@
 # VENu
+The VENu-Demo folder is an oculus touch controlled working demo of the project. Some assets are not lot located here because of Copyright law.
 
 This is the repository for the MicroBooNE VR project. 
 
@@ -7,13 +8,13 @@ Some of the instructions may not quite work. Please let olykken know if somethin
 
 ## Requirements
 
-You'll need to install usually the latest version of Unity (see below). 
+You'll need to install usually the latest version of Unity (see below). There is also an asset called VRTouchCoreMovement that was purchased so it cannot be posted here.
 
 ## A word about Unity versions
 
 Git and Unity don't really get along all that well. In order to make them more compatable, it is recommended that everyone working uses the same version of Unity. The repository currently uses version 5.3.5.
 
-Unity 5.3.5 can be downloaded here: http://unity3d.com/get-unity/download
+Unity 5.6 can be downloaded here: http://unity3d.com/get-unity/download
 
 Additional notes: Unity relies on a system of linked scripts and gameobjects. Some of these will save and be uploaded to git without a problem, but do not be surprised if you pull the repository, open it in Unity and find "missing referenced script/object" warnings. You will have to drag the appropriate script or prefab back to the corresponding field in the editor. Again, this is a side effect of using git with Unity--certain settings aren't always saved, so be careful!
 
