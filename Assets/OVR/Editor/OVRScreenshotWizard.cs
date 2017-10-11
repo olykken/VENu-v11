@@ -21,7 +21,7 @@ class OVRScreenshotWizard : ScriptableWizard
 	}
 
 	public GameObject		renderFrom = null;
-	public CubemapSize		size = CubemapSize.Size_2048x2048;
+	public int				size = 2048;
 	public SaveMode			saveMode = SaveMode.SaveUnityCubemap;
 	public string			cubeMapFolder = "Assets/Textures/Cubemaps";
 	public TexFormat		textureFormat = TexFormat.PNG;
@@ -122,13 +122,13 @@ class OVRScreenshotWizard : ScriptableWizard
 			}
 		}
 		string pathName = string.Format("{0}vr_screenshot_{1}.cubemap", cubeMapFolder, (++idx).ToString("d2"));
-		Cubemap cubemap = new Cubemap((int)size, TextureFormat.RGB24, false);
+		Cubemap cubemap = new Cubemap(size, TextureFormat.RGB24, false);
 
 		// render into cubemap        
 		if ((camera != null) && (cubemap != null))
 		{
 			// set up cubemap defaults
-			camera.RenderToCubemap(cubemap);
+			OVRCubemapCapture.RenderIntoCubemap(camera, cubemap);
 			if (existingCamera)
 			{
 				camera.enabled = existingCameraStateSave;
