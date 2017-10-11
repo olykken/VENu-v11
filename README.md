@@ -1,5 +1,5 @@
 # VENu
-The VENu-Demo folder is an oculus touch controlled working demo of the project. Some assets are not lot located here because of Copyright law.
+The VENu-Demo Repository is an oculus touch controlled working demo of the project. Some assets are not lot located here because of Copyright law.
 
 This is the repository for the MicroBooNE VR project. 
 
